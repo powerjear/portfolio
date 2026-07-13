@@ -201,7 +201,7 @@ document.addEventListener('DOMContentLoaded', function () {
       form.reset();
 
       if (formNote) {
-        formNote.textContent 
+        formNote.textContent =
           result.message ||
           "Thank you! Your message has been sent successfully.";
       }
