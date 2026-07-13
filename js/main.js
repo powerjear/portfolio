@@ -110,29 +110,117 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   /* ── CONTACT FORM ── */
-  const contactForm = document.getElementById('contact-form');
-  if (contactForm) {
-    contactForm.addEventListener('submit', function (e) {
-      e.preventDefault();
-      const btn = contactForm.querySelector('button[type="submit"]');
-      const originalText = btn.textContent;
-      btn.textContent = 'Sending…';
-      btn.disabled = true;
+ document.addEventListener("DOMContentLoaded", function () {
+  const WORKER_URL =
+    "https://bisagunsa.marjbsayao.workers.dev/";
 
-      // Simulate send (replace with actual form handler / Formspree / GHL webhook)
-      setTimeout(function () {
-        btn.textContent = 'Message Sent ✓';
-        btn.style.background = '#2d8a4e';
-        contactForm.reset();
-        setTimeout(function () {
-          btn.textContent = originalText;
-          btn.style.background = '';
-          btn.disabled = false;
-        }, 3000);
-      }, 1200);
-    });
+  const form = document.getElementById("contact-form");
+
+  if (!form) {
+    console.error("Contact form not found.");
+    return;
   }
 
+  const submitButton = form.querySelector('button[type="submit"]');
+  const formNote = form.querySelector(".form-note");
+
+  const originalButtonText = submitButton
+    ? submitButton.textContent
+    : "Send Message →";
+
+  form.addEventListener("submit", async function (event) {
+    event.preventDefault();
+
+    if (!form.checkValidity()) {
+      form.reportValidity();
+      return;
+    }
+
+    const firstName =
+      document.getElementById("first-name")?.value.trim() || "";
+
+    const lastName =
+      document.getElementById("last-name")?.value.trim() || "";
+
+    const email =
+      document.getElementById("email")?.value.trim() || "";
+
+    const phone =
+      document.getElementById("phone")?.value.trim() || "";
+
+    const service =
+      document.getElementById("service")?.value.trim() || "";
+
+    const message =
+      document.getElementById("message")?.value.trim() || "";
+
+    const payload = {
+      first_name: firstName,
+      last_name: lastName,
+      email: email,
+      phone: phone,
+      service: service,
+      message: message
+    };
+
+    if (submitButton) {
+      submitButton.disabled = true;
+      submitButton.textContent = "Sending...";
+    }
+
+    if (formNote) {
+      formNote.textContent = "Sending your message...";
+    }
+
+    try {
+      const response = await fetch(WORKER_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const responseText = await response.text();
+
+      let result = {};
+
+      try {
+        result = JSON.parse(responseText);
+      } catch (error) {
+        result = {};
+      }
+
+      if (!response.ok) {
+        throw new Error(
+          result.error ||
+          "Your message could not be sent. Please try again."
+        );
+      }
+
+      form.reset();
+
+      if (formNote) {
+        formNote.textContent =
+          result.message ||
+          "Thank you! Your message has been sent successfully.";
+      }
+    } catch (error) {
+      console.error("Contact form submission error:", error);
+
+      if (formNote) {
+        formNote.textContent =
+          error.message ||
+          "Something went wrong. Please try again.";
+      }
+    } finally {
+      if (submitButton) {
+        submitButton.disabled = false;
+        submitButton.textContent = originalButtonText;
+      }
+    }
+  });
+});
   /* ── CURRENT YEAR IN FOOTER ── */
   const yearEl = document.getElementById('footer-year');
   if (yearEl) { yearEl.textContent = new Date().getFullYear(); }
